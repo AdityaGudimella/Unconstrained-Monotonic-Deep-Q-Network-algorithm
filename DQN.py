@@ -416,14 +416,15 @@ class DQN:
             for _ in range(10):
                 rewards.append(-21)
             episode = 0
+            totalReward = 0
             while episode < numberOfEpisodes:
                 # Set the initial RL variables
                 # state = self.processState(trainingEnv.reset())
                 state = trainingEnv.get_states_()
 
                 # Set the performance tracking veriables
+                pbar.set_description("Mean: %.3f|Last %.3f" % np.mean(list(rewards)), totalReward)
                 totalReward = 0
-                pbar.set_description("Rewards: %.3f" % np.mean(list(rewards)))
 
                 # Interact with the training environment until termination
                 while True:
@@ -455,6 +456,7 @@ class DQN:
 
                     # Continuous tracking of the training performance
                     totalReward += exp_.rewards.item()
+                    rewards.append(totalReward)
 
                     # Incrementation of the number of iterations (steps)
                     self.steps += 1
@@ -469,18 +471,18 @@ class DQN:
                 self.writer.add_scalar("Training score (2)", totalReward, self.steps)
 
                 # Store and report the performance of the RL policy (testing)
-                if episode % 4 == 0:
-                    _, testingScore = self.testing(trainingEnv, False, False)
-                    performanceTesting.append([episode, self.steps, testingScore])
-                    self.writer.add_scalar("Testing score (1)", testingScore, episode)
-                    self.writer.add_scalar("Testing score (2)", testingScore, self.steps)
+                # if episode % 4 == 0:
+                #     # _, testingScore = self.testing(trainingEnv, False, False)
+                #     performanceTesting.append([episode, self.steps, testingScore])
+                #     self.writer.add_scalar("Testing score (1)", testingScore, episode)
+                #     self.writer.add_scalar("Testing score (2)", testingScore, self.steps)
 
                 # Store the training and testing results in a csv file
-                if episode % 100 == 0:
-                    dataframeTraining = pd.DataFrame(performanceTraining, columns=['Episode', 'Steps', 'Score'])
-                    dataframeTraining.to_csv(''.join([self.experimentFolder, 'TrainingResults.csv']))
-                    dataframeTesting = pd.DataFrame(performanceTesting, columns=['Episode', 'Steps', 'Score'])
-                    dataframeTesting.to_csv(''.join([self.experimentFolder, 'TestingResults.csv']))
+                # if episode % 100 == 0:
+                #     dataframeTraining = pd.DataFrame(performanceTraining, columns=['Episode', 'Steps', 'Score'])
+                #     dataframeTraining.to_csv(''.join([self.experimentFolder, 'TrainingResults.csv']))
+                #     dataframeTesting = pd.DataFrame(performanceTesting, columns=['Episode', 'Steps', 'Score'])
+                #     dataframeTesting.to_csv(''.join([self.experimentFolder, 'TestingResults.csv']))
 
                 # If required, print a training feedback
                 if verbose:
