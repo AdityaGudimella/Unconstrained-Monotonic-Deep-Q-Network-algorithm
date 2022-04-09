@@ -33,7 +33,7 @@ from DQN import DQN
 class FQF(DQN):
     """
     GOAL: Implementing the FQF Deep Reinforcement Learning algorithm.
-    
+
     VARIABLES: - device: Hardware specification (CPU or GPU).
                - gamma: Discount factor of the RL algorithm.
                - learningRate: Learning rate of the DL optimizer (ADAM).
@@ -53,7 +53,7 @@ class FQF(DQN):
                - epsilonValue: Current value of epsilon (Epsilon-Greedy).
                - policyNetwork: Deep Neural Network representing the info used by the RL policy.
                - targetNetwork: Deep Neural Network representing the target network.
-        
+
     METHODS: - __init__: Initialization of the RL algorithm.
              - chooseAction: Choose a valid action based on the current state
                              observed, according to the RL policy learned.
@@ -64,15 +64,15 @@ class FQF(DQN):
                  parametersFileName='', reporting=True):
         """
         GOAL: Initializing the RL agent based on the FQF Deep Reinforcement Learning
-              algorithm, by setting up the algorithm parameters as well as 
+              algorithm, by setting up the algorithm parameters as well as
               the Deep Neural Networks.
-        
+
         INPUTS: - observationSpace: RL observation space.
                 - actionSpace: RL action space.
                 - environment: Name of the RL environment.
                 - parametersFileName: Name of the JSON parameters file.
                 - reporting: Enable the reporting of the results.
-        
+
         OUTPUTS: /
         """
 
@@ -99,7 +99,15 @@ class FQF(DQN):
         # Set the Experience Replay mechanism
         self.batchSize = parameters['batchSize']
         self.capacity = parameters['capacity']
-        self.replayMemory = ReplayMemory(self.capacity)
+        # self.replayMemory = ReplayMemory(self.capacity)
+        self.replayMemory = memories.AtariExperienceReplay(
+            batch_size=self.batchSize,
+            capacity=self.capacity,
+            frame_stack=4,
+            state_height=84,
+            state_width=84,
+            n=1,
+        )
 
         # Set the distribution support
         self.N = parameters['N']
@@ -142,35 +150,35 @@ class FQF(DQN):
         """
         GOAL: Choose a valid RL action from the action space according to the
               RL policy as well as the current RL state observed.
-        
+
         INPUTS: - state: RL state returned by the environment.
                 - plot: Enable the plotting of the random returns distributions.
-        
+
         OUTPUTS: - action: RL action chosen from the action space.
         """
 
         # Choose the best action based on the RL policy
         with torch.no_grad():
-            state = torch.from_numpy(state).float().to(self.device).unsqueeze(0)
+            state = torch.from_numpy(state).float().to(self.device)#.unsqueeze(0)
             stateEmbedding = self.policyNetwork.embedding(state)
             _, tausBis, _ = self.fractionProposalNetwork(stateEmbedding)
             quantiles = self.policyNetwork(state, tausBis, stateEmbedding)
             Qvalues = quantiles.mean(2)
             _, action = Qvalues.max(1)
-            
-            return action.item()
+
+            return action.numpy()
 
 
     def learning(self):
         """
         GOAL: Sample a batch of past experiences and learn from it
               by updating the Reinforcement Learning policy.
-        
+
         INPUTS: /
-        
+
         OUTPUTS: - loss: Loss of the learning procedure.
         """
-        
+
         # Check that the replay memory is filled enough
         if (len(self.replayMemory) >= self.batchSize):
 
@@ -203,7 +211,7 @@ class FQF(DQN):
             fractionalLoss += self.entropyCoefficient * entropy.mean()
 
             # Computation of the new distribution to be learnt by the policy DNN
-            with torch.no_grad(): 
+            with torch.no_grad():
                 nextStateEmbedding = self.targetNetwork.embedding(nextState)
                 nextQuantiles = self.targetNetwork(nextState, tausBis, nextStateEmbedding)
                 nextAction = nextQuantiles.mean(2).max(1)[1].view(self.batchSize, 1, 1).expand(self.batchSize, 1, self.N)
