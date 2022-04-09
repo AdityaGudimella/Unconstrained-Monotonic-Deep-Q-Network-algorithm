@@ -423,7 +423,7 @@ class DQN:
                 state = trainingEnv.get_states_()
 
                 # Set the performance tracking veriables
-                pbar.set_description("Mean: %.3f|Last %.3f" % np.mean(list(rewards)), totalReward)
+                pbar.set_description(f"Mean: {np.mean(list(rewards)):3f}|Last {totalReward:3f}")
                 totalReward = 0
 
                 # Interact with the training environment until termination
