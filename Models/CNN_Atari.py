@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 # pylint: disable=E1101
 # pylint: disable=E1102
+from morl import external_utils as extu
 
 
 
@@ -19,9 +20,9 @@ class CNN_Atari(nn.Module):
     """
     GOAL: Implementing the CNN part of the DNN designed for the DQN algorithm
           to successfully play Atari games.
-    
+
     VARIABLES:  - network: Convolutional Neural Network.
-                                
+
     METHODS:    - __init__: Initialization of the Convolutional Neural Network.
                 - forward: Forward pass of the Convolutional Neural Network.
     """
@@ -29,9 +30,9 @@ class CNN_Atari(nn.Module):
     def __init__(self, numberOfInputs):
         """
         GOAL: Defining and initializing the Convolutional Neural Network.
-        
+
         INPUTS: - numberOfInputs: Number of inputs of the Convolutional Neural Network.
-        
+
         OUTPUTS: /
         """
 
@@ -40,6 +41,7 @@ class CNN_Atari(nn.Module):
 
         # Initialization of the Convolutional Neural Network
         self.network = nn.Sequential(
+            extu.AsDtype(torch.float32),
             nn.Conv2d(numberOfInputs, 32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=4, stride=2),
@@ -48,25 +50,25 @@ class CNN_Atari(nn.Module):
             nn.ReLU()
         )
 
-    
+
     def getOutputSize(self):
         """
         GOAL: Get the size of the Convolutional Neural Network output.
-        
+
         INPUTS: /
-        
+
         OUTPUTS: - size: Size of the Convolutional Neural Network. output.
         """
 
         return self.network(torch.zeros(1, *(4, 84, 84))).view(1, -1).size(1)
 
-    
+
     def forward(self, x):
         """
         GOAL: Implementing the forward pass of the Convolutional Neural Network.
-        
+
         INPUTS: - x: Input of the Convolutional Neural Network.
-        
+
         OUTPUTS: - y: Output of the Convolutional Neural Network.
         """
 

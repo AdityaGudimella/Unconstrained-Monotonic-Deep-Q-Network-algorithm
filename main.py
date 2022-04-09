@@ -11,7 +11,7 @@ from CustomEnvironments.stochasticGridWorld import StochasticGridWorld
 from CustomEnvironments.stochasticGridWorldOptimal import StochasticGridWorldOptimal
 from MonteCarloDistributions import MonteCarloDistributions
 from AtariWrapper import AtariWrapper
-
+from morl import environments as envs
 
 
 ###############################################################################
@@ -19,27 +19,43 @@ from AtariWrapper import AtariWrapper
 ###############################################################################
 
 # Supported RL algorithms
-algorithms = ['DQN', 'CDQN', 'QR_DQN', 'IQN', 'FQF',
-              'UMDQN_KL', 'UMDQN_C', 'UMDQN_W']
+algorithms = ["DQN", "CDQN", "QR_DQN", "IQN", "FQF", "UMDQN_KL", "UMDQN_C", "UMDQN_W"]
 
 # Supported RL environments
-environments = ['StochasticGridWorld', 'PongNoFrameskip-v4',
-                'BoxingNoFrameskip-v4', 'FreewayNoFrameskip-v4']
-
+environments = [
+    "StochasticGridWorld",
+    "PongNoFrameskip-v4",
+    "BoxingNoFrameskip-v4",
+    "FreewayNoFrameskip-v4",
+]
 
 
 ###############################################################################
 ##################################### MAIN ####################################
 ###############################################################################
 
-if(__name__ == '__main__'):
+if __name__ == "__main__":
 
     # Retrieve the paramaters sent by the user
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument("-algorithm", default='UMDQN_C', type=str, help="Name of the RL algorithm")
-    parser.add_argument("-environment", default='StochasticGridWorld', type=str, help="Name of the RL environment")
-    parser.add_argument("-episodes", default=10000, type=str, help="Number of episodes for training")
-    parser.add_argument("-parameters", default='parameters', type=str, help="Name of the JSON parameters file")
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument(
+        "-algorithm", default="UMDQN_C", type=str, help="Name of the RL algorithm"
+    )
+    parser.add_argument(
+        "-environment",
+        default="StochasticGridWorld",
+        type=str,
+        help="Name of the RL environment",
+    )
+    parser.add_argument(
+        "-episodes", default=int(1e6), type=str, help="Number of episodes for training"
+    )
+    parser.add_argument(
+        "-parameters",
+        default="parameters",
+        type=str,
+        help="Name of the JSON parameters file",
+    )
     args = parser.parse_args()
 
     # Checking of the parameters validity
@@ -48,29 +64,35 @@ if(__name__ == '__main__'):
     episodes = args.episodes
     parameters = args.parameters
     if algorithm not in algorithms:
-        print("The algorithm specified is not valid, only the following algorithms are supported:")
+        print(
+            "The algorithm specified is not valid, only the following algorithms are supported:"
+        )
         for algo in algorithms:
-            print("".join(['- ', algo]))
+            print("".join(["- ", algo]))
         quit()
     if environment not in environments:
-        print("The environment specified is not valid, only the following environments are supported:")
+        print(
+            "The environment specified is not valid, only the following environments are supported:"
+        )
         for env in environments:
-            print("".join(['- ', env]))
+            print("".join(["- ", env]))
         quit()
-    if parameters == 'parameters':
-        parameters = ''.join(['Parameters/parameters_', str(algorithm), '_', str(environment), '.json'])
-    
+    if parameters == "parameters":
+        parameters = "".join(
+            ["Parameters/parameters_", str(algorithm), "_", str(environment), ".json"]
+        )
+
     # Name of the file for saving the RL policy learned
-    fileName = 'SavedModels/' + algorithm + '_' + environment
-    
+    fileName = "SavedModels/" + algorithm + "_" + environment
+
     # Initialization of the RL environment
-    if environment == 'StochasticGridWorld':
+    if environment == "StochasticGridWorld":
         env = StochasticGridWorld()
     else:
         atariWrapper = AtariWrapper()
         env = atariWrapper.wrapper(environment, stickyActionsProba=0.25)
-        fileName = 'SavedModels/' + algorithm + '_Atari57'
-        parameters = ''.join(['Parameters/parameters_', algorithm, '_Atari57.json'])
+        fileName = "SavedModels/" + algorithm + "_Atari57"
+        parameters = "".join(["Parameters/parameters_", algorithm, "_Atari57.json"])
 
     # Determination of the state and action spaces
     observationSpace = env.observation_space.shape[0]
@@ -82,9 +104,26 @@ if(__name__ == '__main__'):
     RLAgent = className(observationSpace, actionSpace, environment, parameters)
 
     # Training of the RL agent
-    RLAgent.training(env, episodes, verbose=True, rendering=False, plotTraining=False)
-    #RLAgent.plotExpectedPerformance(env, episodes, iterations=10)
-    
+    train_env = envs.GymEnv.make_ale_env(
+        game="Pong",
+        action_repeat_prob=0.25,
+        reward_min=-1,
+        reward_max=1,
+        seed=0,
+    )
+    eval_env = envs.GymEnv.make_ale_env(
+        game="Pong",
+        action_repeat_prob=0.25,
+        reward_min=-1,
+        reward_max=1,
+        seed=0,
+        training_mode=False,
+    )
+    RLAgent.training(
+        train_env, episodes, verbose=True, rendering=False, plotTraining=False
+    )
+    # RLAgent.plotExpectedPerformance(env, episodes, iterations=10)
+
     # Saving of the RL model
     RLAgent.saveModel(fileName)
 
@@ -92,7 +131,7 @@ if(__name__ == '__main__'):
     RLAgent.loadModel(fileName)
 
     # Testing of the RL agent
-    RLAgent.testing(env, verbose=True, rendering=True)
+    RLAgent.testing(train_env, verbose=True, rendering=True)
 
     # Plotting of the true distribution of the random return via Monte Carlo
     """

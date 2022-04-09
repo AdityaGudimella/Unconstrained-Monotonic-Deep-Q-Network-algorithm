@@ -1,0 +1,6 @@
+Tensorboard/
+Experiments/
+SavedModels/
+Models/
+__pycache__/
+.history/
