@@ -456,7 +456,6 @@ class DQN:
 
                     # Continuous tracking of the training performance
                     totalReward += exp_.rewards.item()
-                    rewards.append(totalReward)
 
                     # Incrementation of the number of iterations (steps)
                     self.steps += 1
@@ -465,6 +464,7 @@ class DQN:
                     if exp_.dones.item():
                         break
 
+                rewards.append(totalReward)
                 # Store and report the performance of the RL policy (training)
                 performanceTraining.append([episode, self.steps, totalReward])
                 self.writer.add_scalar("Training score (1)", totalReward, episode)
